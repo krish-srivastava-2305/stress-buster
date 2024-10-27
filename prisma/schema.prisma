@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  anonyName        String    @unique
+  email            String    @unique
+  id               String    @id @default(uuid())
+  emergencyContact String
+  createdAt        DateTime  @default(now())
+  posts            Post[]
+  // chats            Chat[]
+  alerts           Alert[]
+  surveys          Survey[]
+  Comment          Comment[]
+}
+
+model Post {
+  id        String    @id @default(uuid())
+  title     String
+  content   String
+  flagged   Boolean   @default(false)
+  image     String?
+  comments  Comment[]
+  createdAt DateTime  @default(now())
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  postId    String
+  userId    String
+  post      Post     @relation(fields: [postId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Survey {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  responses Json
+  score     Int
+  createdAt DateTime @default(now())
+  alert     Alert?
+  alerdId   String?  @unique
+}
+
+model Alert {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  survey        Survey?  @relation(fields: [surveyId], references: [id])
+  surveyId      String?  @unique
+  createdAt     DateTime @default(now())
+  alertSent     Boolean  @default(false)
+  contactMethod String
+}
+
+// model Chat {
+//   id        String   @id @default(uuid())
+//   userId    String
+//   user      User     @relation(fields: [userId], references: [id])
+//   message   String
+//   sentBy    String   @relation(fields: [senderId], references: [id])
+//   senderId  String   @unique
+//   createdAt DateTime @default(now())
+//   sessionId String
+// }
