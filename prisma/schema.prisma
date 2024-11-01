@@ -19,6 +19,12 @@ model User {
   id               String    @id @default(uuid())
   emergencyContact String
   createdAt        DateTime  @default(now())
+  refreshToken     String?
+  surveyDays       DateTime
+  password         String
+  // dateOfBirth      DateTime
+  dateOfBirth      String
+  likedPosts       Post[]    @relation("PostLikes")
   posts            Post[]
   // chats            Chat[]
   alerts           Alert[]
@@ -32,6 +38,8 @@ model Post {
   content   String
   flagged   Boolean   @default(false)
   image     String?
+  likes     Int       @default(0)
+  likedBy   User[]    @relation("PostLikes")
   comments  Comment[]
   createdAt DateTime  @default(now())
   authorId  String
