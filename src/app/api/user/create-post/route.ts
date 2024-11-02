@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 import {v2 as cloudinary} from 'cloudinary';
 import jwt from 'jsonwebtoken';    
+import checkPostContent from "@/util/checkPostContent";
 
 const prisma = new PrismaClient();
 
@@ -24,8 +25,16 @@ export const POST = async (req: NextRequest) => {
         const content = formData.get("content") as string | undefined;
         const image = formData.get("image") as File | undefined
 
-        if(!title || !content || !image){
+        if(!title || !content){
             return NextResponse.json({error: "Please provide all fields"},{
+                status: 400,
+            });
+        }
+
+        const isAppropriate = await checkPostContent(content);
+        console.log(isAppropriate)
+        if(!isAppropriate){
+            return NextResponse.json({error: "Inappropriate content"},{
                 status: 400,
             });
         }
@@ -60,10 +69,13 @@ export const POST = async (req: NextRequest) => {
             });
         }
 
-        const bytes = await image.arrayBuffer();
+        let response: CloudinaryResponse = {public_id: ""};
+
+        if(image){
+            const bytes = await image.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        const response = await new Promise<CloudinaryResponse> ((resolve, reject) => {
+        response = await new Promise<CloudinaryResponse> ((resolve, reject) => {
             cloudinary.uploader.upload_stream({resource_type: "auto"}, (error, result) => {
                 if(error){
                     reject(error);
@@ -72,6 +84,7 @@ export const POST = async (req: NextRequest) => {
                 }
             }).end(buffer);
         })
+        }
         
         const newPost = await prisma.post.create({
             data: {
