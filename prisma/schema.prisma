@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,22 +8,22 @@ datasource db {
 }
 
 model User {
-  anonyName        String    @unique
-  email            String    @unique
-  id               String    @id @default(uuid())
+  anonyName        String     @unique
+  email            String     @unique
+  id               String     @id @default(uuid())
   emergencyContact String
-  createdAt        DateTime  @default(now())
+  createdAt        DateTime   @default(now())
+  dateOfBirth      String
+  password         String
   refreshToken     String?
   surveyDays       DateTime
-  password         String
-  // dateOfBirth      DateTime
-  dateOfBirth      String
-  likedPosts       Post[]    @relation("PostLikes")
-  posts            Post[]
-  // chats            Chat[]
   alerts           Alert[]
+  comments         Comment[]
+  messages         Message[]
+  posts            Post[]
   surveys          Survey[]
-  Comment          Comment[]
+  chatRooms        ChatRoom[] @relation("ChatRoomUsers")
+  likedPosts       Post[]     @relation("PostLikes")
 }
 
 model Post {
@@ -38,12 +32,12 @@ model Post {
   content   String
   flagged   Boolean   @default(false)
   image     String?
-  likes     Int       @default(0)
-  likedBy   User[]    @relation("PostLikes")
-  comments  Comment[]
   createdAt DateTime  @default(now())
   authorId  String
+  likes     Int       @default(0)
+  comments  Comment[]
   author    User      @relation(fields: [authorId], references: [id])
+  likedBy   User[]    @relation("PostLikes")
 }
 
 model Comment {
@@ -59,32 +53,36 @@ model Comment {
 model Survey {
   id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
   responses Json
   score     Int
   createdAt DateTime @default(now())
   alert     Alert?
-  alerdId   String?  @unique
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model Alert {
   id            String   @id @default(uuid())
   userId        String
-  user          User     @relation(fields: [userId], references: [id])
-  survey        Survey?  @relation(fields: [surveyId], references: [id])
   surveyId      String?  @unique
   createdAt     DateTime @default(now())
   alertSent     Boolean  @default(false)
   contactMethod String
+  survey        Survey?  @relation(fields: [surveyId], references: [id])
+  user          User     @relation(fields: [userId], references: [id])
 }
 
-// model Chat {
-//   id        String   @id @default(uuid())
-//   userId    String
-//   user      User     @relation(fields: [userId], references: [id])
-//   message   String
-//   sentBy    String   @relation(fields: [senderId], references: [id])
-//   senderId  String   @unique
-//   createdAt DateTime @default(now())
-//   sessionId String
-// }
+model ChatRoom {
+  id       String    @id @default(uuid())
+  messages Message[]
+  users    User[]    @relation("ChatRoomUsers")
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  content    String
+  createdAt  DateTime @default(now())
+  userId     String
+  chatRoomId String
+  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+}

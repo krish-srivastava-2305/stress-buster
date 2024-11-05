@@ -1,6 +1,5 @@
-"use server"
+'use server'
 import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
 
 export const createName = async () => {   
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -29,6 +28,7 @@ export const createName = async () => {
 }
 
 const uniquename = async (name: string) => {
+    const prisma = new PrismaClient();
     try {
         if(!name) return false;
         const user = await prisma.user.findUnique({

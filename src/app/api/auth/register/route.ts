@@ -47,8 +47,8 @@ export const POST = async (req: NextRequest): Promise<NextResponse> => {
                 email,
                 password: hashedPass,
                 emergencyContact,
-                // dateOfBirth: new Date(dateOfBirth), 
-                dateOfBirth: dateOfBirth,
+                dateOfBirth: (new Date(dateOfBirth)).toString(), 
+                // dateOfBirth: dateOfBirth,
                 surveyDays,
                 anonyName
             }
@@ -57,7 +57,7 @@ export const POST = async (req: NextRequest): Promise<NextResponse> => {
         console.log(newUser)
     
         const accessToken = jwt.sign(
-            { userId: newUser.id, anonyName, surveyDays },
+            { userId: newUser.id, anonyName, surveyDays, email },
             process.env.ACCESS_TOKEN_SECRET,
             { expiresIn: "1d" }
         );
