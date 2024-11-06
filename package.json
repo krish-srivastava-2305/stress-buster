@@ -12,6 +12,7 @@
     "@anthropic-ai/sdk": "^0.31.0",
     "@google/generative-ai": "^0.21.0",
     "@prisma/client": "^5.21.1",
+    "axios": "^1.7.7",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.5.1",
     "jsonwebtoken": "^9.0.2",

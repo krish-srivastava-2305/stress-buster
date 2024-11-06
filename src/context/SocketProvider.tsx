@@ -1,3 +1,4 @@
+// /SocketProvider.tsx
 "use client";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
@@ -7,54 +8,59 @@ interface SocketProviderProps {
 }
 
 interface ISocketContext {
-  sendMessage: (msg: string) => any;
-  messages: string[];
+  sendMessage: (msg: string, senderId: string, receiverId: string) => void;
+  messages: { roomId: string; message: string; senderId: string }[];
+  joinRoom: (senderId: string, receiverId: string) => void;
 }
 
 const SocketContext = React.createContext<ISocketContext | null>(null);
 
 export const useSocket = () => {
-  const state = useContext(SocketContext);
-  if (!state) throw new Error(`state is undefined`);
-
-  return state;
+  const context = useContext(SocketContext);
+  if (!context) throw new Error("SocketContext is undefined");
+  return context;
 };
 
 export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const [socket, setSocket] = useState<Socket>();
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<{ roomId: string; message: string; senderId: string }[]>([]);
 
-  const sendMessage: ISocketContext["sendMessage"] = useCallback(
-    (msg) => {
-      console.log("Send Message", msg);
+  const joinRoom = useCallback(
+    (senderId: string, receiverId: string) => {
       if (socket) {
-        socket.emit("event:message", { message: msg });
+        socket.emit("join-room", { senderId, receiverId });
       }
     },
     [socket]
   );
 
-  const onMessageRec = useCallback((msg: string) => {
-    console.log("From Server Msg Rec", msg);
-    const { message } = JSON.parse(msg) as { message: string };
-    setMessages((prev) => [...prev, message]);
+  const sendMessage = useCallback(
+    (msg: string, senderId: string, receiverId: string) => {
+      if (socket) {
+        socket.emit("send-message", { senderId, receiverId, message: msg });
+      }
+    },
+    [socket]
+  );
+
+  const onMessageReceived = useCallback((data: { roomId: string; message: string; senderId: string }) => {
+    setMessages((prevMessages) => [...prevMessages, data]);
   }, []);
 
   useEffect(() => {
-    const _socket = io("http://localhost:8000");
-    _socket.on("message", onMessageRec);
-
+    const _socket = io("http://localhost:8000"); // Adjust URL if necessary
     setSocket(_socket);
 
+    _socket.on("receive-message", onMessageReceived);
+
     return () => {
-      _socket.off("message", onMessageRec);
+      _socket.off("receive-message", onMessageReceived);
       _socket.disconnect();
-      setSocket(undefined);
     };
-  }, []);
+  }, [onMessageReceived]);
 
   return (
-    <SocketContext.Provider value={{ sendMessage, messages }}>
+    <SocketContext.Provider value={{ sendMessage, messages, joinRoom }}>
       {children}
     </SocketContext.Provider>
   );

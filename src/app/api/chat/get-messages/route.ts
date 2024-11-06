@@ -6,7 +6,8 @@ const prisma = new PrismaClient();
 
 export const GET = async (req: NextRequest): Promise<NextResponse> => {
     try {
-        const { roomId } = await req.json();
+        const url = req.nextUrl;
+        const roomId = url.searchParams.get("roomId") as string;
         const token = req.cookies.get("accessToken");
         if(!token) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -47,10 +48,10 @@ export const GET = async (req: NextRequest): Promise<NextResponse> => {
         
         const messageMap = new Map();
         room.messages.forEach(message => {
-            messageMap.set(message, message.id);
+            messageMap.set(message, message.user.id);
         });
 
-        return NextResponse.json(messageMap, { status: 200 });
+        return NextResponse.json( {messages : room.messages}, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "Internal Server Error in Getting Messages" }, { status: 500 });
     } finally {

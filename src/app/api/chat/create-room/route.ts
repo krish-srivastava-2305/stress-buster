@@ -12,17 +12,27 @@ export const POST = async (req: NextRequest): Promise<NextResponse> => {
             return NextResponse.json({ error: "Missing user2Id" }, { status: 400 });
         }
 
-        const token = req.cookies.get("accessToken")
+        const token = req.cookies.get("accessToken")?.value as string
         
         if (!token) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const decoded = jwt.decode(token.value) as { id: string };
-        const user1Id = decoded.id;
-        const roomId = [user1Id, user2Id].sort().join("-");
+        const decoded = jwt.decode(token) as { id: string };
 
-        const existingRoom = await prisma.chatRoom.findFirst({where: {id: roomId}});  
+        if (!decoded) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const user1Id = decoded.id;
+
+        if (!user1Id) {
+            return NextResponse.json({ error: "Id not found" }, { status: 400 });
+        }
+
+        const roomId = [user1Id, user2Id].sort().join("__");
+
+        const existingRoom = await prisma.chatRoom.findFirst({where: {id: roomId}}); 
 
         if(existingRoom) {
             return NextResponse.json(existingRoom, { status: 200 });
@@ -39,9 +49,11 @@ export const POST = async (req: NextRequest): Promise<NextResponse> => {
                 }
             }
         })
+
         return NextResponse.json(room, { status: 201 });
         
     } catch (error) {
+        console.log("Error in Joining Room: ", error);
         return NextResponse.json({ error: "Internal Server Error in Joining Room" }, { status: 500 });
         
     } finally {
