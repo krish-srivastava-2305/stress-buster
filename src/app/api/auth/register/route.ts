@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 export const POST = async (req: NextRequest): Promise<NextResponse> => {
     try {
         // Parse and validate request data
-        const { email, password, emergencyContact, dateOfBirth } = await req.json();
+        const { email, password, emergencyContact, dateOfBirth, anonyName, surveyDays } = await req.json();
         if (!email || !password || !emergencyContact || !dateOfBirth) {
             return NextResponse.json({ error: "Please provide all fields" }, { status: 400 });
         }
@@ -31,10 +31,6 @@ export const POST = async (req: NextRequest): Promise<NextResponse> => {
         const salt = await genSalt(10);
         const hashedPass = await hash(password, salt);
 
-        // Set surveyDays to 7 days from current date
-        const surveyDays = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-        const anonyName = await createName()
-
         // Generate tokens and check environment variables
         if (!process.env.ACCESS_TOKEN_SECRET || !process.env.REFRESH_TOKEN_SECRET) {
             return NextResponse.json({ error: "Token secrets are not defined" }, { status: 500 });
@@ -46,7 +42,7 @@ export const POST = async (req: NextRequest): Promise<NextResponse> => {
                 email,
                 password: hashedPass,
                 emergencyContact,
-                dateOfBirth: (new Date(dateOfBirth)).toString(), 
+                dateOfBirth,
                 // dateOfBirth: dateOfBirth,
                 surveyDays,
                 anonyName
@@ -90,44 +86,3 @@ export const POST = async (req: NextRequest): Promise<NextResponse> => {
         await prisma.$disconnect();
     }
 };
-
-
-export const createName = async () => {   
-    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    const nums = "0123456789";
-    let name = "";
-    for(let i = 0; i < 5; i++){
-        const random = Math.floor(Math.random()*26);
-        name += alphabet[random];
-    }
-    for(let i = 0; i < 3; i++){
-        const random = Math.floor(Math.random()*10);
-        name += nums[random];
-    }
-    while(!uniquename(name)){
-        for(let i = 0; i < 5; i++){
-            const random = Math.floor(Math.random()*26);
-            name += alphabet[random];
-        }
-        for(let i = 0; i < 3; i++){
-            const random = Math.floor(Math.random()*10);
-            name += nums[random];
-        }
-    }
-
-    return name;
-}
-
-const uniquename = async (name: string) => {
-    try {
-        if(!name) return false;
-        const user = await prisma.user.findUnique({
-            where: {
-                anonyName: name
-            }
-        });
-        return user ? true : false;
-    } catch (error) {
-        throw new Error("Error generating anonymous name")
-    }
-}
