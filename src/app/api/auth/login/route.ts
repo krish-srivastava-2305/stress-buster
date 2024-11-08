@@ -44,7 +44,7 @@ export const POST = async (req: NextRequest) : Promise<NextResponse> => {
         );
         const refreshToken = jwt.sign({accessToken}, process.env.REFRESH_TOKEN_SECRET!, {expiresIn: "7d"});
 
-        const response =  NextResponse.json({ user, message: "User logged in" }, {status: 200});
+        const response =  NextResponse.json({message: "User logged in"}, {status: 200});
 
         response.cookies.set("refreshToken", refreshToken);
         response.cookies.set("accessToken", accessToken);
