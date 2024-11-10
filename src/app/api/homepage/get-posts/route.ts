@@ -8,6 +8,18 @@ export const GET = async(req: NextRequest): Promise<NextResponse> => {
         const posts = await prisma.post.findMany({
             orderBy: {
                 createdAt: "desc"
+            },
+            select :{
+                id: true,
+                title: true,
+                content: true,
+                createdAt: true,
+                author: {
+                    select: {
+                        anonyName: true,
+                    }
+                },
+                image: true
             }
         })
         

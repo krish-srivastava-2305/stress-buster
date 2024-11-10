@@ -1,9 +1,11 @@
-import HomePage from "@/components/HomePage";
+import LogInPage from "@/components/LogInPage";
+import { BackgroundBeams } from "@/components/ui/background-beams";
 
 export default function Home() {
   return (
-    <div className="h-full w-full">
-      <HomePage />
+    <div className="relative h-full w-full">
+      <LogInPage />
+      <BackgroundBeams/> 
     </div>
   );
 }
