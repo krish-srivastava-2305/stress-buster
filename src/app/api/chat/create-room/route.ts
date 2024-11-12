@@ -35,7 +35,7 @@ export const POST = async (req: NextRequest): Promise<NextResponse> => {
         const existingRoom = await prisma.chatRoom.findFirst({where: {id: roomId}}); 
 
         if(existingRoom) {
-            return NextResponse.json(existingRoom, { status: 200 });
+            return NextResponse.json(existingRoom, { status: 202 });
         }
 
         const room = await prisma.chatRoom.create({
@@ -50,7 +50,7 @@ export const POST = async (req: NextRequest): Promise<NextResponse> => {
             }
         })
 
-        return NextResponse.json(room, { status: 201 });
+        return NextResponse.json(room, { status: 200 });
         
     } catch (error) {
         console.log("Error in Joining Room: ", error);

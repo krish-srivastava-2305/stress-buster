@@ -8,11 +8,11 @@ datasource db {
 }
 
 model User {
-  anonyName        String     @unique
-  email            String     @unique
-  id               String     @id @default(uuid())
+  anonyName        String         @unique
+  email            String         @unique
+  id               String         @id @default(uuid())
   emergencyContact String
-  createdAt        DateTime   @default(now())
+  createdAt        DateTime       @default(now())
   dateOfBirth      String
   password         String
   refreshToken     String?
@@ -22,8 +22,9 @@ model User {
   messages         Message[]
   posts            Post[]
   surveys          Survey[]
-  chatRooms        ChatRoom[] @relation("ChatRoomUsers")
-  likedPosts       Post[]     @relation("PostLikes")
+  chatRooms        ChatRoom[]     @relation("ChatRoomUsers")
+  likedPosts       Post[]         @relation("PostLikes")
+  notifications    Notification[]
 }
 
 model Post {
@@ -85,4 +86,12 @@ model Message {
   chatRoomId String
   chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id])
   user       User     @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
 }

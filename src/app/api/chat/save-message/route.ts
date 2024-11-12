@@ -22,7 +22,7 @@ export const POST = async (req: NextRequest): Promise<NextResponse> => {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        const decoded = jwt.decode(token.value) as { id: string }
+        const decoded = jwt.decode(token.value) as { id: string, anonyName: string }
         const senderId = decoded.id
 
         const savedMessage = await prisma.message.create({
@@ -38,6 +38,20 @@ export const POST = async (req: NextRequest): Promise<NextResponse> => {
                         id: roomId
                     }
                 }
+            }
+        })
+
+        const users : string[] = roomId.split("__");
+        const receiverId: string = users.find((user) => user !== senderId) as string
+
+        await prisma.notification.create({
+            data: {
+                content: `New Message from ${decoded.anonyName}`,
+                user: {
+                    connect: {
+                        id: receiverId
+                    }
+                },
             }
         })
 

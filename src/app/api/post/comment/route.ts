@@ -21,6 +21,8 @@ export const POST = async(req: NextRequest): Promise<NextResponse> => {
 
         const { postId, content } = await req.json()
 
+        console.log(postId, content)
+
         if(!postId || !content){
             return NextResponse.json({error: "Please provide all fields"}, {status: 400})
         }
@@ -55,7 +57,32 @@ export const POST = async(req: NextRequest): Promise<NextResponse> => {
             }
         })
 
-        return NextResponse.json({comment}, {status: 201})
+        const newComment = await prisma.comment.findUnique({
+            where: { id: comment.id },
+            select: {
+                id: true,
+                content: true,
+                user: {
+                    select: {
+                        id: true,
+                        anonyName: true
+                    }
+                }   
+            }
+        })
+
+        await prisma.notification.create({
+            data: {
+                user: {
+                    connect: {
+                        id: post.authorId
+                    }
+                },
+                content: `${newComment?.user.anonyName} commented on your post`,
+            }
+        })
+
+        return NextResponse.json({comment: newComment}, {status: 200})
     } catch (error) {
         return NextResponse.json({error: "Server error while commenting"}, {status: 500})
     } finally {

@@ -21,11 +21,10 @@ export const POST = async (req: NextRequest) => {
     try {
         const formData = await req.formData(); 
 
-        const title = formData.get("title") as string | undefined;
         const content = formData.get("content") as string | undefined;
         const image = formData.get("image") as File | undefined
 
-        if(!title || !content){
+        if(!content){
             return NextResponse.json({error: "Please provide all fields"},{
                 status: 400,
             });
@@ -47,7 +46,7 @@ export const POST = async (req: NextRequest) => {
             });
         }
         
-        const decoded = jwt.decode(accessToken) as {userId: string, anonyName: string, surveyDays: Date} | null;
+        const decoded = jwt.decode(accessToken) as {id: string, anonyName: string} | null;
 
         if(!decoded){
             return NextResponse.json({error: "Unauthorized"},{
@@ -55,7 +54,7 @@ export const POST = async (req: NextRequest) => {
             });
         }
 
-        const userId: string = decoded.userId
+        const userId: string = decoded.id
 
         const user = await prisma.user.findFirst({
             where: {
@@ -88,14 +87,25 @@ export const POST = async (req: NextRequest) => {
         
         const newPost = await prisma.post.create({
             data: {
-                title,
+                title: "New Post",
                 content,
                 image: response.url,
                 author: {
                     connect: {
+                        id: userId
+                    }
+                },
+            }
+        })
+
+        await prisma.notification.create({
+            data:{
+                user: {
+                    connect: {
                         id: user.id
                     }
                 },
+                content: `You created a new post`,
             }
         })
 

@@ -11,7 +11,7 @@ export const POST = async(req: NextRequest): Promise<NextResponse> => {
             return NextResponse.json({error: "Unauthorized"}, {status: 401})
         }
 
-        const decoded = jwt.decode(token) as {id: string} | null
+        const decoded = jwt.decode(token) as {id: string, anonyName: string} | null
 
         if(!decoded){
             return NextResponse.json({error: "Unauthorized"}, {status: 401})
@@ -20,8 +20,10 @@ export const POST = async(req: NextRequest): Promise<NextResponse> => {
 
         const userId = decoded.id as string
         const { postId } = await req.json()
-
-        console.log(userId, postId)
+        console.log(postId)
+        if(!postId){
+            return NextResponse.json({error: "Please provide all fields"}, {status: 400})
+        }
 
         const post = await prisma.post.findUnique({
             where: {
@@ -77,6 +79,18 @@ export const POST = async(req: NextRequest): Promise<NextResponse> => {
                     }
                 }
             })
+
+            await prisma.notification.create({
+                data:{
+                    user: {
+                        connect: {
+                            id: post.authorId
+                        }
+                    },
+                    content: `${decoded.anonyName} liked your post`,
+                }
+            })
+
             return NextResponse.json({message: "Post liked"}, {status: 200})
         }
         

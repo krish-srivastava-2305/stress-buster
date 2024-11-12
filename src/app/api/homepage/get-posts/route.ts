@@ -16,6 +16,7 @@ export const GET = async(req: NextRequest): Promise<NextResponse> => {
                 createdAt: true,
                 author: {
                     select: {
+                        id: true,
                         anonyName: true,
                     }
                 },

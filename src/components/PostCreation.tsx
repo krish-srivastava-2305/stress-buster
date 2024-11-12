@@ -28,10 +28,17 @@ const PostCreation: React.FC<PostCreationProps> = ({ onSubmit }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(content, imageFile);
-    setContent('');
-    setImageFile(null);
-    setImagePreview(null);
+    const formData = new FormData();
+    formData.append('content', content);
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+    try {
+      const res = await axios.post('/api/user/create-post', formData)
+      toast.success('Post created successfully!');
+    } catch (error : any) {
+      toast.error(error.response.data.error); 
+    }
   };
 
   return (

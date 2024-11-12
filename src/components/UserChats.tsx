@@ -1,8 +1,8 @@
-// /Chat.tsx
-"use client";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import React, { useEffect, useState } from "react";
 import { useSocket } from "@/context/SocketProvider";
+import { useRouter } from "next/navigation";
+import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 
 interface Message {
   content: string;
@@ -16,7 +16,7 @@ interface Chat {
 }
 
 interface Props {
-  id: string; // current user's ID
+  id: string;
 }
 
 const UserChats: React.FC<Props> = ({ id }) => {
@@ -24,8 +24,18 @@ const UserChats: React.FC<Props> = ({ id }) => {
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newText, setNewText] = useState<string>("");
-
+  const router = useRouter();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { sendMessage, messages: socketMessages, joinRoom } = useSocket();
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    // Scroll to bottom whenever messages change
+    scrollToBottom();
+  }, [messages]);
 
   useEffect(() => {
     const getChats = async () => {
@@ -73,15 +83,6 @@ const UserChats: React.FC<Props> = ({ id }) => {
     if (newText && selectedChat) {
       sendMessage(newText, id, selectedChat);
 
-      // setMessages((prev) => [
-      //   ...prev,
-      //   {
-      //     content: newText,
-      //     position: "right",
-      //     timestamp: new Date().toLocaleString(),
-      //   },
-      // ]);
-
       try {
         const roomId = [id, selectedChat].sort().join("__");
         const res = await axios.post(`/api/chat/save-message`, {roomId, message: newText});
@@ -96,52 +97,93 @@ const UserChats: React.FC<Props> = ({ id }) => {
   };
 
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex h-screen w-full bg-[#0f172a]">
       {/* Sidebar */}
-      <div className="w-1/4 bg-gray-900 text-white p-4">
-        {chats.map((chat) => (
-          <div
-            key={chat.id}
-            onClick={() => handleChatSelection(chat.users.find((u) => u.id !== id)?.id || "", chat.id)}
-            className="flex items-center p-3 cursor-pointer hover:bg-gray-800"
+      <div className="w-80 border-r border-gray-800">
+        <div className="p-4 border-b border-gray-800 flex items-center gap-3">
+          <button 
+            onClick={() => router.back()} 
+            className="p-2 rounded-full hover:bg-gray-800 transition-colors"
           >
-            <p className="text-sm font-semibold">
-              {chat.users.find((user) => user.id !== id)?.anonyName}
-            </p>
-          </div>
-        ))}
+            <FaArrowLeft className="w-5 h-5 text-gray-400" />
+          </button>
+          <h1 className="text-lg font-semibold text-white">Messages</h1>
+        </div>
+        <div className="overflow-y-auto scrollbar-hide h-[calc(100vh-4rem)]">
+          {chats.map((chat) => {
+            const otherUser = chat.users.find((u) => u.id !== id);
+            return (
+              <div
+                key={chat.id}
+                onClick={() => handleChatSelection(otherUser?.id || "", chat.id)}
+                className={`flex items-center p-4 cursor-pointer transition-colors
+                  ${selectedChat === chat.id ? 'bg-gray-800' : 'hover:bg-gray-800/50'}`}
+              >
+                <div className="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center text-white font-medium">
+                  {otherUser?.anonyName.charAt(0)}
+                </div>
+                <div className="ml-3">
+                  <p className="text-white font-medium">{otherUser?.anonyName}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Chat Area */}
-      <div className="w-3/4 bg-gray-800 text-white flex flex-col">
-        {selectedChat && (
+      <div className="flex-1 flex flex-col">
+        {selectedChat ? (
           <>
-            <div className="p-4 border-b border-gray-700">
-              <h2 className="text-lg font-semibold">
-                {chats.find((chat) => chat.id === selectedChat)?.users.find((user) => user.id !== id)?.anonyName}
+            <div className="p-5 border-b border-gray-800">
+              <h2 className="text-lg font-semibold text-white">
+                {chats.find((chat) => chat.users.some(u => u.id === selectedChat))
+                  ?.users.find((user) => user.id !== id)?.anonyName}
               </h2>
             </div>
-            <div className="flex-1 p-4 overflow-y-auto">
+
+            <div className="flex-1 overflow-y-auto scrollbar-hide p-4 space-y-4">
               {messages.map((message, index) => (
                 <div key={index} className={`flex ${message.position === "right" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-xs p-3 rounded-lg ${message.position === "right" ? "bg-blue-600" : "bg-gray-700"}`}>
-                    <p>{message.content}</p>
-                    <p className="text-xs text-gray-400 mt-1">{message.timestamp}</p>
+                  <div 
+                    className={`max-w-md rounded-2xl px-4 py-2 ${
+                      message.position === "right" 
+                        ? "bg-blue-600 text-white" 
+                        : "bg-gray-800 text-gray-100"
+                    }`}
+                  >
+                    <p className="text-sm">{message.content}</p>
+                    <p className="text-xs mt-1 opacity-60">{message.timestamp}</p>
                   </div>
                 </div>
               ))}
+              {/* Invisible div for auto-scrolling */}
+              <div ref={messagesEndRef} />
             </div>
-            <div className="p-4 border-t border-gray-700 flex">
-              <input
-                type="text"
-                className="flex-1 bg-gray-900 p-2 rounded-l-lg text-white"
-                value={newText}
-                onChange={(e) => setNewText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleTextSend()}
-              />
-              <button onClick={handleTextSend} className="bg-blue-500 p-2 rounded-r-lg">Send</button>
+
+            <div className="p-4 border-t border-gray-800">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Type a message..."
+                  className="flex-1 bg-gray-800 text-white rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={newText}
+                  onChange={(e) => setNewText(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleTextSend()}
+                />
+                <button 
+                  onClick={handleTextSend} 
+                  className="p-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                >
+                  <FaArrowRight className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-gray-500">
+            <p>Select a conversation to start messaging</p>
+          </div>
         )}
       </div>
     </div>

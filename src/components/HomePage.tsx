@@ -9,6 +9,7 @@ import { BackgroundBeams } from './ui/background-beams';
 interface Author {
   anonyName: string;
   avatar?: string;
+  id: string;
 }
 
 interface Post {
@@ -42,7 +43,7 @@ const HomePage: React.FC = () => {
 
     return (
         <>
-          <div className="flex justify-center items-center gap-4 py-32">
+          <div className="flex justify-center items-center gap-4 py-16">
             {/* Make this flaot in air like */}
             <div className="w-2/3 rounded-2xl border-2 border-slate-900 bg-[#3b3b3b50] shadow-2xl">
                 <PostCreation onSubmit={(content, imageFile) => {
@@ -50,7 +51,7 @@ const HomePage: React.FC = () => {
                 }} />
                 <PostList posts={posts} />
             </div>
-            <Sidebar />
+            <Sidebar tab='Home' />
           </div>
           <div className='fixed bg-black -z-10 top-0 left-0 h-full w-full'>
             <BackgroundBeams />

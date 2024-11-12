@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, Variants } from 'framer-motion';
 import { FaHome, FaBell, FaEnvelope, FaUser, FaHashtag } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
@@ -35,6 +35,10 @@ const Sidebar: React.FC<SidebarProps> = ({tab} : {tab: string}) => {
   const [activeItem, setActiveItem] = useState(tab);
   const router = useRouter();
   
+  useEffect(() => {
+    setActiveItem(tab)
+  }, [tab])
+
   const sidebarItems = [
     { icon: <FaHome />, label: 'Home', fwd: '/homepage' },
     { icon: <FaBell />, label: 'Notifications', fwd: '/notifications' },
