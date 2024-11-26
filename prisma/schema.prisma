@@ -54,7 +54,7 @@ model Comment {
 model Survey {
   id        String   @id @default(uuid())
   userId    String
-  responses Json
+  responses String
   score     Int
   createdAt DateTime @default(now())
   alert     Alert?

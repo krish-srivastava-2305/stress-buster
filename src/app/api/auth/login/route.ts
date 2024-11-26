@@ -38,7 +38,7 @@ export const POST = async (req: NextRequest) : Promise<NextResponse> => {
         }
 
         const accessToken = jwt.sign(
-            { id: user.id, email, anonyName: user.anonyName, surveyDays: user.surveyDays },
+            { id: user.id, email, anonyName: user.anonyName, surveyNow: false },
             process.env.ACCESS_TOKEN_SECRET!,
             { expiresIn: "1d" }
         );
