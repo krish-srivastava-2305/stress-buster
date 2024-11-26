@@ -4,18 +4,19 @@ import jwt from "jsonwebtoken";
 export const middleware = async (req: NextRequest): Promise<NextResponse> => {
     try {
         const path = req.nextUrl.pathname;
+        const token = req.cookies.get("accessToken")?.value;
 
-        if (path === "/") {
-            console.log("Public route accessed:", path);
+        if (path === "/" && !token) {
             return NextResponse.next();
         }
-
-        const token = req.cookies.get("accessToken")?.value;
-        console.log("Token present:", !!token);
 
         if (!token) {
             console.log("No token found, redirecting to public page");
             return NextResponse.redirect(new URL("/", req.url));
+        }
+
+        if(path === "/") {
+            return NextResponse.redirect(new URL("/homepage", req.url));
         }
 
         let decoded;

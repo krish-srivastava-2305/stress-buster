@@ -37,7 +37,19 @@ export const POST = async (req: NextRequest) : Promise<NextResponse> => {
             }
         });
 
-        return NextResponse.json({ success: "Survey submitted" });
+        await prisma.user.update({
+            where: {id: decoded.id},
+            data: {
+                surveyDays: new Date(Date.now() + 7*24*60*60*1000),
+                surveys: {
+                    connect: {
+                        id: survey.id
+                    }   
+                }
+            }
+        })
+
+        return NextResponse.json({ success: "Survey submitted" }, {status: 200});   
         
     } catch (error) {
         return NextResponse.json({ error: "Could not submit survey" }, { status: 500 });
